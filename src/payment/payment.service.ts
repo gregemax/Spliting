@@ -122,6 +122,37 @@ export class PaymentService {
       if (!validStatuses.includes(response.data.status)) {
         throw new BadRequestException(`Invalid order status: ${response.data.status}`);
       }
+
+      // Add status-based message
+      let statusMessage = '';
+      switch (response.data.status) {
+        case OrderStatus.INITIATED:
+          statusMessage = 'Order initiated via API (before Gateway creation)';
+          break;
+        case OrderStatus.PENDING:
+          statusMessage = 'Order awaiting provider assignment';
+          break;
+        case OrderStatus.PROCESSING:
+          statusMessage = 'Order being processed by provider';
+          break;
+        case OrderStatus.CANCELLED:
+          statusMessage = 'Order cancelled by provider';
+          break;
+        case OrderStatus.FULFILLED:
+          statusMessage = 'Order fulfilled by provider';
+          break;
+        case OrderStatus.VALIDATED:
+          statusMessage = 'Order validated and ready for settlement';
+          break;
+        case OrderStatus.SETTLED:
+          statusMessage = 'Order fully completed on blockchain';
+          break;
+        case OrderStatus.EXPIRED:
+          statusMessage = 'Order expired because no transfer was made to the receive address within the time limit';
+          break;
+      }
+
+      response.data.statusMessage = statusMessage;
     }
 
     return response;
