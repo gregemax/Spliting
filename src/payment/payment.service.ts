@@ -46,7 +46,7 @@ export class PaymentService {
     const orderData = {
       amount: createPaymentDto.amount,
       token: createPaymentDto.token,
-      network: 'base',
+      network: 'celo',
       rate: rates?.data, // Use the fetched rate
       recipient: {
         institution: createPaymentDto.recipient.institution,
