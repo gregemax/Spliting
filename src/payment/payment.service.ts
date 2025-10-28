@@ -44,12 +44,18 @@ export class PaymentService {
       );
     }
     console.log('Verified Account:', viracc.data);
-    // Then create the payment order with the fetched rate
+
+    // Validate token
+    const supportedTokens = await this.tokens();
+    if (!supportedTokens.data || !supportedTokens.data.some(token => token.symbol === createPaymentDto.token)) {
+      throw new BadRequestException(`Token '${createPaymentDto.token}' is not supported or configured`);
+    }
+
     const orderData = {
       amount: createPaymentDto.amount,
       token: createPaymentDto.token,
-      network: 'celo',
-      rate: rates?.data, // Use the fetched rate
+      network: "celo",
+      rate: rates?.data, 
       recipient: {
         institution: createPaymentDto.recipient.institution,
         accountIdentifier: createPaymentDto.recipient.accountIdentifier,
@@ -57,7 +63,7 @@ export class PaymentService {
         currency: createPaymentDto.recipient.currency,
         memo: 'With love from split ',
       },
-      // reference: createPaymentDto.reference,
+     
       returnAddress: '0xb39b7c02372dBBb003c05D6b4ABA2eC68842934D',
     };
 
@@ -70,8 +76,45 @@ export class PaymentService {
       body: JSON.stringify(orderData),
     });
 
-    const order = await response.json();
+    let order = await response.json();
     console.log('Order created:', order);
+
+    if (order.status !== 'success') {
+      // Handle rate not achievable by retrying with available rate
+      if (order.data && order.data.field === 'Rate' && order.data.message.includes('Available rate is')) {
+        const availableRateMatch = order.data.message.match(/Available rate is (\d+\.\d+)/);
+        if (availableRateMatch) {
+          const availableRate = parseFloat(availableRateMatch[1]);
+          orderData.rate = availableRate;
+
+          const retryResponse = await fetch('https://api.paycrest.io/v1/sender/orders', {
+            method: 'POST',
+            headers: {
+              'API-Key': this.configService.get<string>('API_KEY') || '',
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(orderData),
+          });
+
+          order = await retryResponse.json();
+          console.log('Order created after retry:', order);
+
+          if (order.status === 'success') {
+            return {
+              order,
+              rate: availableRate.toString(),
+              verifyAcc: viracc.data,
+            };
+          } else {
+            const retryErrorMessage = order.data ? `${order.data.field}: ${order.data.message}` : order.message;
+            throw new BadRequestException(retryErrorMessage || 'Failed to create order after retry');
+          }
+        }
+      }
+
+      const errorMessage = order.data ? `${order.data.field}: ${order.data.message}` : order.message;
+      throw new BadRequestException(errorMessage || 'Failed to create order');
+    }
     return {
       order,
       rate: rates?.data,
