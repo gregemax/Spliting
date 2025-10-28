@@ -38,6 +38,7 @@ export class PaymentController {
         value: {
           amount: 1000,
           token: 'USDC',
+          network: 'celo',
           recipient: {
             institution: 'OPAYNGPC',
             accountIdentifier: '1234567890',

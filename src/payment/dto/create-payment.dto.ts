@@ -1,4 +1,4 @@
-import { IsString, IsNumber, IsObject, IsOptional } from 'class-validator';
+import { IsString, IsNumber, IsObject, IsOptional, IsIn } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 class RecipientDto {
@@ -22,6 +22,7 @@ class RecipientDto {
     })
     @IsString()
     currency: string;
+    
 }
 
 export class CreatePaymentDto {
@@ -44,4 +45,13 @@ export class CreatePaymentDto {
         type: RecipientDto,
     })
     recipient: RecipientDto;
+
+    @ApiProperty({
+        description: 'The blockchain network for the transaction',
+        example: 'celo',
+        enum: ['base', 'bnb-smart-chain', 'lisk', 'tron', 'celo', 'arbitrum-one', 'polygon', 'asset-chain'],
+    })
+    @IsString()
+    @IsIn(['base', 'bnb-smart-chain', 'lisk', 'tron', 'celo', 'arbitrum-one', 'polygon', 'asset-chain'])
+    network: string;
 }
