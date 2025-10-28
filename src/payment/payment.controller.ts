@@ -17,6 +17,7 @@ import {
 import { PaymentService } from './payment.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { UpdatePaymentDto } from './dto/update-payment.dto';
+import { VerifyAccountDto } from './dto/verify-account.dto';
 
 @ApiTags('payments')
 @Controller('payment')
@@ -342,5 +343,43 @@ export class PaymentController {
   })
   remove(@Param('id') id: string) {
     return this.paymentService.remove(+id);
+  }
+
+  @Post('verify-account')
+  @ApiOperation({
+    summary: 'Verify account details',
+    description: 'Verifies bank account details using Paycrest API',
+  })
+  @ApiBody({
+    type: VerifyAccountDto,
+    description: 'Account verification data',
+    examples: {
+      'verify-account': {
+        summary: 'Verify account example',
+        value: {
+          institution: 'OPAYNGPC',
+          accountIdentifier: '1234567890',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Account verification successful',
+    schema: {
+      type: 'object',
+      properties: {
+        status: { type: 'string', example: 'success' },
+        message: { type: 'string', example: 'Operation successful' },
+        data: {
+          type: 'object',
+          description: 'Account verification result',
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: 'Bad request - invalid account details' })
+  verifyAccount(@Body() verifyAccountDto: VerifyAccountDto) {
+    return this.paymentService.verifyAccount(verifyAccountDto);
   }
 }

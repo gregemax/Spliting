@@ -2,10 +2,12 @@ import {
   BadRequestException,
   Injectable,
   UnauthorizedException,
+  HttpException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { UpdatePaymentDto } from './dto/update-payment.dto';
+import { VerifyAccountDto } from './dto/verify-account.dto';
 import { OrderStatus } from './enums/order-status.enum';
 
 @Injectable()
@@ -171,4 +173,35 @@ export class PaymentService {
   remove(id: number) {
     return `This action removes a #${id} payment`;
   }
+
+ async verifyAccount(vir: VerifyAccountDto) {
+   try {
+     const verifyAcc = await fetch('https://api.paycrest.io/v1/verify-account', {
+       method: 'POST',
+       headers: {
+         'API-Key': this.configService.get<string>('API_KEY') || '',
+         'Content-Type': 'application/json',
+       },
+       body: JSON.stringify(vir),
+     });
+
+     if (!verifyAcc.ok) {
+       throw new HttpException(
+         `Paycrest API error: ${verifyAcc.status} ${verifyAcc.statusText}`,
+         verifyAcc.status,
+       );
+     }
+
+     let viracc = await verifyAcc.json();
+     return viracc;
+   } catch (error) {
+     if (error instanceof HttpException) {
+       throw error;
+     }
+     throw new HttpException(
+       'Failed to verify account: ' + error.message,
+       500,
+     );
+   }
+ }
 }
