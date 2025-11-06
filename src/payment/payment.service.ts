@@ -5,6 +5,7 @@ import {
   HttpException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Interval } from '@nestjs/schedule';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { UpdatePaymentDto } from './dto/update-payment.dto';
 import { VerifyAccountDto } from './dto/verify-account.dto';
@@ -245,6 +246,19 @@ export class PaymentService {
        'Failed to verify account: ' + error.message,
        500,
      );
+   }
+ }
+
+ @Interval(240000) // 4 minutes in milliseconds
+ async callExternalApi() {
+   try {
+     const response = await fetch('https://spliting-rhq3.onrender.com', {
+       method: 'GET',
+     });
+     const data = await response.json();
+     console.log('External API called successfully:', data);
+   } catch (error) {
+     console.error('Error calling external API:', error.message);
    }
  }
 }
