@@ -65,7 +65,7 @@ export class PaymentService {
         memo: 'With love from split ',
       },
      
-      returnAddress: '0xb39b7c02372dBBb003c05D6b4ABA2eC68842934D',
+      returnAddress: '0x7EF9BC8B9cea37b8236Ce85EcD63fa32e753df94',
     };
 
     const response = await fetch('https://api.paycrest.io/v1/sender/orders', {
